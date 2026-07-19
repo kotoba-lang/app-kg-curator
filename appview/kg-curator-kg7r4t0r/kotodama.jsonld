@@ -1,0 +1,54 @@
+{
+  "@context": "https://kotodama.etzhayyim.com/v1",
+  "@id": "com.etzhayyim.apps.kgCurator",
+  "@type": "KotodamaApp",
+  "nanoid": "kg7r4t0r",
+  "displayName": "Knowledge Graph Curator",
+  "description": "LLM-driven knowledge graph expansion for media-gamers and other AppView projects. Uses Linode GPU node Ollama (gemma4:e4b for JSON extraction) + TEI embeddinggemma (768-dim) for similarity dedup. Auto-syncs new entities to T0 actor + manifest.",
+  "framework": "ts-thin-edge",
+  "component": { "path": "src/app.ts" },
+  "build": {
+    "role": "thin-edge",
+    "businessLogic": "40-engine/kotoba/crates/kotoba-kotodama/py/src/kotodama/ingest/kg_curator.py",
+    "bpmn": "etzhayyim-root/00-contracts/bpmn/com/etzhayyim/kgCurator"
+  },
+  "performerType": "service",
+  "runtimeType": "worker",
+  "uiType": "headless",
+  "profile": {
+    "displayName": "Knowledge Graph Curator",
+    "description": "[AI Agent] Nightly LLM-driven KG expansion using on-prem Linode GPU inference",
+    "category": "platform-tooling",
+    "country": "jpn",
+    "isBot": true,
+    "agentType": "autonomous",
+    "operator": "etzhayyim.com",
+    "capabilities": [
+      "bpmn-dispatch",
+      "kg-coverage-analysis",
+      "llm-entity-generation",
+      "embedding-dedup",
+      "t0-actor-auto-sync"
+    ]
+  },
+  "triggers": {
+    "subscribeRepos": {
+      "collections": [
+        "com.etzhayyim.apps.kgCurator.expansionRequest"
+      ]
+    },
+    "cron": [
+      { "schedule": "17 3 * * *", "method": "com.etzhayyim.apps.kgCurator.analyzeCoverage" }
+    ]
+  },
+  "space": {
+    "name": "KG Curator",
+    "description": "Knowledge graph expansion task tracking",
+    "joinRule": "invite-only",
+    "historyVisibility": "shared",
+    "convos": [
+      { "name": "kg-expansion-log", "kind": "private", "description": "LLM expansion job log", "default": true }
+    ]
+  },
+  "routes": []
+}
