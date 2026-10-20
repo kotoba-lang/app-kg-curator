@@ -1,0 +1,24 @@
+(ns kg.t0-parity-test
+  "aiueos/kg_t0.cljk（判定コア）と正本（AGENTS.md の Pipeline / T0 Identity
+  Convention）の parity。identity 規約・provenance 項目・推論境界が変われば
+  落ちる drift 検査。"
+  (:require [clojure.test :refer [deftest is testing]]
+            [clojure.string :as str]
+            ["fs" :as fs]))
+
+(def agents (fs/readFileSync "AGENTS.md" "utf8"))
+
+(deftest t0-rules-match-guest
+  (testing "guest test-t0: T0 identity（合成 ID / T0 tier / T0-llm-generated）"
+    (is (str/includes? agents "gamechar:{slug}"))
+    (is (str/includes? agents "T0-llm-generated")))
+  (testing "guest test-provenance: 監査証跡 4 項目"
+    (is (str/includes? agents "llm_generated:true"))
+    (is (str/includes? agents "llm_model"))
+    (is (str/includes? agents "llm_node"))
+    (is (str/includes? agents "generated_at")))
+  (testing "guest test-dedup: slug 一致 / cosine 類似 dedup"
+    (is (str/includes? agents "cosine dedup")))
+  (testing "guest test-inference: on-prem のみ（外部 AI 無し）"
+    (is (str/includes? agents "All inference on-prem"))
+    (is (str/includes? agents "no Workers AI"))))

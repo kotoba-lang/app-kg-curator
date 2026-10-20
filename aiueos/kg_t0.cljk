@@ -1,0 +1,63 @@
+(ns kg.t0
+  "kg-curator T0 判定コア — itonami dapp bundle（pure, :effects #{}）。
+
+  LLM 生成 entity の identity / 出所の判定（正本: AGENTS.md の
+  Pipeline と T0 Identity Convention）:
+
+  - **T0 identity**: `did:etzhayyim:gamechar:{slug}` の合成 ID、
+    execution_tier = T0、classification = T0-llm-generated。
+    「ローカル jsonld、did.json、PDS profile record いずれも不要。
+    RisingWave 内で identity 完結」。
+  - **provenance 必須**: manifest の profile_json に llm_generated:true /
+    llm_model / llm_node / generated_at（ISO8601）を記録する監査証跡。
+  - **dedup**: slug 一致（現状）または cosine 類似で重複を落とす。
+  - **推論は on-prem のみ**（外部 AI 呼び出し無し —— Workers AI / Anthropic /
+    OpenAI に飛ばさない）。
+
+  t0-consistent: 1 = 合成 ID / T0 tier / T0-llm-generated classification
+  provenance-ok: 1 = 4 項目の監査証跡が揃う
+  dedup-judgment: 1 = 重複として落とす（slug 一致 or 類似超過）/ 0 = 新規
+  inference-ok: 1 = on-prem / 0 = 外部 AI（違反 — fail closed）
+
+  実行 host はスカラーのみ = KIR v3 / i64/direct ABI（kernel/selfhost 両対応）。
+
+  テストはゼロ引数 test-*、戻り 1/0:
+  <amu> test aiueos/kg_t0.cljk"
+  (:export [main t0-consistent provenance-ok dedup-judgment inference-ok
+            test-t0 test-provenance test-dedup test-inference test-fail-closed]))
+
+(defn main [] :i64
+  0)
+
+(defn t0-consistent [synthetic-did :i64 tier-t0 :i64 class-t0-llm :i64] :i64
+  (if (and (= synthetic-did 1) (= tier-t0 1) (= class-t0-llm 1)) 1 0))
+
+(defn provenance-ok [llm-generated :i64 has-model :i64 has-node :i64 has-generated-at :i64] :i64
+  (if (and (= llm-generated 1) (= has-model 1) (= has-node 1) (= has-generated-at 1)) 1 0))
+
+(defn dedup-judgment [same-slug :i64 cosine-over :i64] :i64
+  (if (or (= same-slug 1) (= cosine-over 1)) 1 0))
+
+(defn inference-ok [is-on-prem :i64] :i64
+  (if (= is-on-prem 1) 1 0))
+
+;; --- tests（戻り 1 = pass） ------------------------------------------------
+
+(defn test-t0 [] :i64
+  (if (= (+ (t0-consistent 1 1 1) (t0-consistent 1 1 0) (t0-consistent 0 1 1)) 1) 1 0))
+
+(defn test-provenance [] :i64
+  ;; 4 項目の監査証跡（llm_generated / model / node / generated_at）
+  (if (= (+ (provenance-ok 1 1 1 1) (provenance-ok 1 1 1 0) (provenance-ok 0 1 1 1)) 1) 1 0))
+
+(defn test-dedup [] :i64
+  ;; slug 一致 or 類似超過で落とす
+  (if (= (+ (dedup-judgment 1 0) (dedup-judgment 0 1) (dedup-judgment 1 1) (dedup-judgment 0 0)) 3) 1 0))
+
+(defn test-inference [] :i64
+  ;; on-prem のみ（外部 AI は違反）
+  (if (= (+ (inference-ok 1) (inference-ok 0)) 1) 1 0))
+
+(defn test-fail-closed [] :i64
+  ;; provenance 欠落は不合格（監査証跡無しの生成 entity を通さない）
+  (if (= (+ (provenance-ok 1 0 1 1) (provenance-ok 1 1 0 1)) 0) 1 0))

@@ -1,0 +1,18 @@
+;; app-kg-curator — itonami（dapp）の aiueos アプリ記述子（notes.edn 形）。
+;; 判定コアは aiueos/kg_t0.cljk（T0 identity / provenance / dedup / 推論境界）。
+;; 正本は AGENTS.md の Pipeline と T0 Identity Convention。pure（:effects #{}）。
+{:aiueos/component :app/kg-t0
+ :aiueos/kind :app
+ :aiueos/trust :untrusted
+ :aiueos/source "kg_t0.cljk"
+ :aiueos/wasm "kg_t0.wasm"
+ :aiueos/entry "main"
+ :aiueos/args []
+ :aiueos/imports #{}
+ :aiueos/exports #{:app/main
+                   :app/t0-consistent
+                   :app/provenance-ok
+                   :app/dedup-judgment
+                   :app/inference-ok}
+ :aiueos/effects #{}
+ :aiueos/limits {:memory-pages 16 :fuel 5000000}}
